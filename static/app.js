@@ -1,0 +1,214 @@
+"use strict";
+
+let delay = 1500;
+let sum = 0;
+
+$(document).ready(function() {
+    
+    $("#new_game").on("click", function() {
+        if (document.getElementById("player_hand")) {
+            reset_screen();
+        }
+        create_game_screen();
+        // Send an AJAX request with the button ID as data
+        $.ajax({
+            url: '/new_game',
+            success: function(response) {
+                console.log('game initialized successfully');
+
+                // Displays the cards on screend
+                response = JSON.parse(response);
+                display_hands(response[0], 'player');
+                display_hands(response[1], 'dealer');
+
+                // Hides the second card of the dealer
+                const second_card = document.getElementById("dealer-2");
+                second_card.style.backgroundColor = "rgb(169, 163, 163)";
+                second_card.style.color = "rgb(169, 163, 163)";
+
+
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Error:', textStatus, errorzThrown);
+            }
+        });
+    });
+
+    $("#container").on("click", "#hit_me.commands", function() {
+        
+        $.ajax({
+            url: '/dealPlayer',
+            success: function(response) {
+                remove_hands('player');
+                response = JSON.parse(response);
+                display_hands(response, 'player');
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Error:', textStatus, errorThrown);
+            }
+        });
+
+        $.ajax({
+            url: '/is_bust',
+            success: async function(response) {
+                response = JSON.parse(response);
+                if (response == 'Bust') {
+                    await sleep(delay);
+                    let message = 'Bust ! You Lost'
+                    game_over(message, 'player');
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Error:', textStatus, errorThrown);
+            }
+        });
+    });
+
+    $("#container").on("click", "#stand.commands", async function() {
+    
+        $.ajax({
+                url: '/dealDealer',
+                async: false,
+                success: function(response) {
+                    // Reveals the second card of the dealer
+                    const second_card = document.querySelector("#dealer-2.dealer-cards");
+                    second_card.style.backgroundColor = "transparent";
+                    second_card.style.color = "black";
+                
+                    remove_hands('dealer');
+                    response = JSON.parse(response);
+                    display_hands(response[0], 'dealer');
+
+                    sum = response[1];               
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Error:', textStatus, errorThrown);
+            }
+        }); 
+        await sleep(delay);
+        check_winner();
+    });
+});
+
+function create_game_screen() {
+    // Get the element where the divs will be added
+    const container = document.getElementById("container");
+
+    // Create div for the player's hand
+    const player_hand = document.createElement("div");
+    player_hand.setAttribute("id", `player_hand`);
+    player_hand.setAttribute("class", "hands");
+    player_hand.textContent = `Player`;
+    container.appendChild(player_hand)
+
+    // Create div for the dealer's hand
+    const dealer_hand = document.createElement("div");
+    dealer_hand.setAttribute("id", `dealer_hand`);
+    dealer_hand.setAttribute("class", "hands");
+    dealer_hand.textContent = `Dealer`;
+    container.appendChild(dealer_hand)
+
+    // Create 'hit me' and 'stand' buttons
+
+    const commands = document.createElement("div");
+    commands.setAttribute("class", "commands");
+    container.appendChild(commands)
+
+    const hit_me = document.createElement("button");
+    hit_me.setAttribute("id", `hit_me`);
+    hit_me.setAttribute("class", "commands");
+    hit_me.textContent = `Hit me`;
+    commands.appendChild(hit_me)
+
+    const stand = document.createElement("button");
+    stand.setAttribute("id", `stand`);
+    stand.setAttribute("class", "commands");
+    stand.textContent = `Stand`;
+    commands.appendChild(stand)
+    
+    const new_game = document.getElementById("new_game");
+    new_game.style.display = 'none';
+}
+
+function display_hands(cards, parent) {
+    const hand = document.getElementById(`${parent}_hand`);
+
+    // Loop to create and append each card to its parent
+    for (let i = 1; i <= cards.length; i++) {
+        const card = document.createElement("div");
+        card.setAttribute("id", `${parent}-${i}`);
+        card.setAttribute("class", `${parent}-cards`);
+        card.textContent = cards[i - 1];
+        hand.appendChild(card)
+    }
+}
+
+function remove_hands(parent) {
+    const hand = document.getElementById(`${parent}_hand`);
+    const children = hand.querySelectorAll(`.${parent}-cards`); // replace 'childID' with the ID of the child elements you want to remove
+
+    children.forEach(child => child.remove());
+}
+
+function write_to_screen(message, parent) {
+    remove_hands(parent);
+    const hand = document.getElementById(`${parent}_hand`);
+
+    const message_card = document.createElement("div");
+    message_card.setAttribute("id", "message-card");
+    message_card.setAttribute("class", `${parent}-cards`);
+    message_card.textContent = message;
+    hand.appendChild(message_card)
+
+}
+
+function game_over(message, parent) {
+    console.log(message);
+    write_to_screen(message, parent)
+
+    const new_game = document.getElementById("new_game");
+    new_game.style.display = 'block';
+}
+
+function reset_screen() {
+    const player_hand = document.getElementById('player_hand');
+    const dealer_hand = document.getElementById('dealer_hand');
+    const commands = document.querySelector('.commands');
+    player_hand.remove();
+    dealer_hand.remove();
+    commands.remove();
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function check_winner() {
+    if (sum > 21) {
+        console.log('sum > 21');
+        let message = 'Bust! Dealer Lost you Won!';
+        game_over(message, 'dealer');
+    } else if (sum <= 16) {
+        console.log('sum <= 16');
+        const stand = document.querySelector("#stand.commands");
+        stand.click();
+    } else {
+        console.log('else');
+        check_winner_no_bust();
+    }
+}
+
+function check_winner_no_bust() {
+    $.ajax({
+        url: '/winner',
+        success: function(response) {
+            let message = JSON.parse(response);
+            game_over(message, 'dealer');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('Error:', textStatus, errorThrown);
+        }
+    });
+}
+
+

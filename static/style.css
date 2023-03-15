@@ -1,0 +1,86 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+  }  
+
+body {
+    font-family: "Raleway";
+    overflow: hidden;
+    font-weight: bold;
+
+}
+
+#container {
+    display:flex;
+    flex-direction: column; /* stack the child elements vertically */
+    justify-content: space-around;
+    align-items: flex start;
+    background-color: #003500d3;
+    height: 100vh;
+}
+
+.hands {
+    width: 90%;
+    height: 35%;
+    margin-left: 6%;    
+}
+
+.hands {
+    display: flex;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.commands {
+    display: flex;
+    justify-content: center;
+    margin-left: 7.5%;
+    margin-right: 7.5%;
+    width: 90%;    
+}
+
+#player_hand {
+    display: flex;
+    justify-content: flex-start;
+}
+
+#dealer_hand  {
+    display: flex;
+    justify-content: flex-start;
+}
+
+#player_hand * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid;
+    border-color: aliceblue;
+    width: 17%;
+    margin-left: 15px;
+}
+
+#dealer_hand * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid;
+    border-color: aliceblue;
+    width: 17%;
+    margin-left: 15px;
+}
+
+#message-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    font-size: 3vw;
+    width: 90%;
+    border: none;
+}
