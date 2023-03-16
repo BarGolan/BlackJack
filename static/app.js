@@ -1,6 +1,6 @@
 "use strict";
 
-let delay = 1500;
+let delay = 2000;
 let sum = 0;
 
 $(document).ready(function() {
@@ -35,28 +35,31 @@ $(document).ready(function() {
     });
 
     $("#container").on("click", "#hit_me.commands", function() {
-        
+        const hit_me = document.querySelector("#hit_me.commands");
+        const stand = document.querySelector("#stand.commands");
         $.ajax({
             url: '/dealPlayer',
             success: function(response) {
                 remove_hands('player');
                 response = JSON.parse(response);
                 display_hands(response, 'player');
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log('Error:', textStatus, errorThrown);
-            }
-        });
 
-        $.ajax({
-            url: '/is_bust',
-            success: async function(response) {
-                response = JSON.parse(response);
-                if (response == 'Bust') {
-                    await sleep(delay);
-                    let message = 'Bust ! You Lost'
-                    game_over(message, 'player');
-                }
+                $.ajax({
+                    url: '/is_bust',
+                    success: async function(response) {
+                        response = JSON.parse(response);
+                        if (response == 'Bust') {
+                            hit_me.style.display = 'none';
+                            stand.style.display = 'none';
+                            await sleep(delay);
+                            let message = 'Bust ! You Lost'
+                            game_over(message, 'player');
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log('Error:', textStatus, errorThrown);
+                    }
+                });
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.log('Error:', textStatus, errorThrown);
@@ -65,28 +68,51 @@ $(document).ready(function() {
     });
 
     $("#container").on("click", "#stand.commands", async function() {
-    
+        const stand = document.querySelector("#stand.commands");
+        const hit_me = document.querySelector("#hit_me.commands");
+        hit_me.style.display = 'none';
+        stand.style.display = 'none';
         $.ajax({
-                url: '/dealDealer',
-                async: false,
-                success: function(response) {
+            url: '/init_dealer_sum',
+            async: false,
+            success: async function(response) {
+                response = JSON.parse(response);
+                let init_sum = response;
+                if (init_sum > 16 & init_sum <=21) {
                     // Reveals the second card of the dealer
                     const second_card = document.querySelector("#dealer-2.dealer-cards");
                     second_card.style.backgroundColor = "transparent";
                     second_card.style.color = "black";
-                
-                    remove_hands('dealer');
-                    response = JSON.parse(response);
-                    display_hands(response[0], 'dealer');
-
-                    sum = response[1];               
+                    await sleep(delay);
+                    check_winner_no_bust();
+                } else {
+                    $.ajax({
+                            url: '/dealDealer',
+                            async: false,
+                            success: async function(response) {
+                                // Reveals the second card of the dealer
+                                const second_card = document.querySelector("#dealer-2.dealer-cards");
+                                second_card.style.backgroundColor = "transparent";
+                                second_card.style.color = "black";
+                            
+                                remove_hands('dealer');
+                                response = JSON.parse(response);
+                                sum = response[1];
+                                display_hands(response[0], 'dealer');
+                                await sleep(delay);
+                                check_winner();
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.log('Error:', textStatus, errorThrown);
+                        }
+                    }); 
+                }
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.log('Error:', textStatus, errorThrown);
             }
-        }); 
-        await sleep(delay);
-        check_winner();
+        });
+
     });
 });
 
@@ -177,6 +203,7 @@ function reset_screen() {
     player_hand.remove();
     dealer_hand.remove();
     commands.remove();
+    sum = 0
 }
 
 function sleep(ms) {
@@ -210,5 +237,7 @@ function check_winner_no_bust() {
         }
     });
 }
+
+
 
 

@@ -23,6 +23,11 @@ body {
     height: 100vh;
 }
 
+#container #new_game {
+    height: 10%;
+    font-size: 1.2vw;
+}
+
 .hands {
     width: 90%;
     height: 35%;
@@ -38,9 +43,23 @@ body {
 .commands {
     display: flex;
     justify-content: center;
+    align-items: center;
     margin-left: 7.5%;
     margin-right: 7.5%;
-    width: 90%;    
+    width: 90%;
+    height: 5%;
+    margin-left: 8%;
+    margin-right: 10px;
+}
+
+.commands button {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    font-size: 1vw;
+    margin-left: 15px;
+    margin-right: 10%;
+    width: 40%;
 }
 
 #player_hand {

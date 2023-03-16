@@ -101,8 +101,8 @@ def dealDealer():
 
 @app.route('/winner')
 def winner():
-    dealer_max = max(sum(dealer_hand))
-    player_max = max(sum(player_hand))
+    dealer_max = max_under_21(dealer_hand)
+    player_max = max_under_21(player_hand)
     if dealer_max > player_max:
         message = 'You Lost! Dealer has a better hand'
         print(message)
@@ -115,6 +115,13 @@ def winner():
         message = 'Split! you and the dealer have equal hands'
         print(message)
         return json.dumps(message)
+
+
+def max_under_21(hand):
+    maximum = max(sum(hand))
+    if maximum > 21:
+        return min(sum(hand))
+    return maximum
 
 
 def sum(hand):
@@ -133,6 +140,21 @@ def sum(hand):
             sum1 += int(c)
             sum2 += int(c)
     return (sum1, sum2)
+
+
+@app.route('/init_dealer_sum')
+def init_dealer_sum():
+    sum1 = 0
+    for card in dealer_hand:
+        c = card[:-2]
+        if c in ['J', 'Q', 'K', 'A']:
+            if c == 'A':
+                sum1 += 1
+            else:
+                sum1 += 10
+        else:
+            sum1 += int(c)
+    return json.dumps(sum1)
 
 
 def insert_to_db():
