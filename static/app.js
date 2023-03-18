@@ -10,13 +10,12 @@ $(document).ready(function() {
             reset_screen();
         }
         create_game_screen();
-        // Send an AJAX request with the button ID as data
         $.ajax({
             url: '/new_game',
             success: function(response) {
                 console.log('game initialized successfully');
 
-                // Displays the cards on screend
+                // Displays the cards on screen
                 response = JSON.parse(response);
                 display_hands(response[0], 'player');
                 display_hands(response[1], 'dealer');
@@ -70,8 +69,15 @@ $(document).ready(function() {
     $("#container").on("click", "#stand.commands", async function() {
         const stand = document.querySelector("#stand.commands");
         const hit_me = document.querySelector("#hit_me.commands");
+        const lamp = document.querySelector("#statistics");
+        const lamp_text = document.querySelector("p");
+
         hit_me.style.display = 'none';
         stand.style.display = 'none';
+        if (lamp_text != null) {
+            lamp_text.style.display = 'none';
+        }
+        lamp.style.display = 'none';
         $.ajax({
             url: '/init_dealer_sum',
             async: false,
@@ -114,6 +120,31 @@ $(document).ready(function() {
         });
 
     });
+
+    $("#statistics").on("click", function() {
+        $.ajax({
+            url: '/statistics',
+            success: function(response) {
+                console.log('caculating statistics');
+                response = JSON.parse(response);
+                response[0] = response[0].toString().replace(/\n/g, "<br>");
+                response[1] = response[1].toString().replace(/\n/g, "<br>");
+                //Checks if stat_div already exists
+                let stat_div = document.getElementById("stat_div")
+                if (stat_div == null) {
+                    stat_div = document.createElement("div");
+                    stat_div.id = "stat_div";
+                    stat_div.innerHTML = '<p> ' + response[0] + '<br>' + response[1] + ' </p>';
+                    document.body.appendChild(stat_div);
+                } else {
+                    stat_div.remove();
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Error:', textStatus, errorThrown);
+            }
+        });
+    });
 });
 
 function create_game_screen() {
@@ -151,7 +182,10 @@ function create_game_screen() {
     stand.setAttribute("class", "commands");
     stand.textContent = `Stand`;
     commands.appendChild(stand)
-    
+   
+    const lamp = document.getElementById("statistics");
+    lamp.style.display = 'block';
+
     const new_game = document.getElementById("new_game");
     new_game.style.display = 'none';
 }
@@ -191,6 +225,19 @@ function write_to_screen(message, parent) {
 function game_over(message, parent) {
     console.log(message);
     write_to_screen(message, parent)
+    let winner = evaluate_message(message)
+
+    $.ajax({
+        url: '/flush_current_to_db',
+        type: 'POST',
+        data: { winner: winner },
+        success: function(response) {
+            console.log('inserting game table to gambler db');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('Error:', textStatus, errorThrown);
+        }
+    });
 
     const new_game = document.getElementById("new_game");
     new_game.style.display = 'block';
@@ -236,6 +283,19 @@ function check_winner_no_bust() {
             console.log('Error:', textStatus, errorThrown);
         }
     });
+}
+
+function evaluate_message(message) {
+    // Checks for messages where the dealer wins
+    if (message === 'Bust ! You Lost' || message == 'You Lost! Dealer has a better hand') {
+        return -1;
+    // Checks for messages where the player wins
+    } else if (message === 'Bust! Dealer Lost you Won!' || message === 'You Won! You have a better hand') {
+        return 1;
+    // Checks for messages where the player and the dealer are tied and split
+    } else if (message === 'Split! you and the dealer have equal hands') {
+        return 0;
+    }
 }
 
 

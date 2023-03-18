@@ -14,6 +14,37 @@ body {
 
 }
 
+#statistics {
+    position: fixed;
+    top: 6%;
+    right: 3%;
+    width: 3%;
+    height: 7%;
+    z-index: 9999;
+}
+
+#statistics img {
+    width: 80%;
+    height: 80%;
+}
+
+#stat_div {
+    position: fixed;
+    top: 6%;
+    right: 12%;
+    display: inline-block;
+    height: 40%;
+    z-index: 9999;
+    background-color: aliceblue;
+    box-shadow: 7px 7px 7px black;
+}
+
+#stat_div p {
+    margin: 10px;
+    line-height: 2;
+    font-size: 2.3vh;
+}
+
 #container {
     display:flex;
     flex-direction: column; /* stack the child elements vertically */
