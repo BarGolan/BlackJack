@@ -181,7 +181,7 @@ function create_game_screen() {
     stand.setAttribute("id", `stand`);
     stand.setAttribute("class", "commands");
     stand.textContent = `Stand`;
-    commands.appendChild(stand)
+    commands.appendChild(stand);
    
     const lamp = document.getElementById("statistics");
     lamp.style.display = 'block';

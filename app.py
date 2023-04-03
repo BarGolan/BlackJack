@@ -50,8 +50,8 @@ def new_game():
     player_hand = []
     dealer_hand = []
 
-    # deal()
-    deal_test()
+    deal()
+    # deal_test()
     tuple_of_lists = (player_hand, dealer_hand)
 
     conn = create_connection()
