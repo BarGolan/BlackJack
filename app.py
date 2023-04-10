@@ -77,10 +77,6 @@ def new_game():
 
     insert_new_row_to_current()
 
-    # update static statistic variables
-    total_wins = find_similar_hands()[0]
-    find_winning_rate()
-
     return json.dumps(tuple_of_lists)
 
 
@@ -114,13 +110,13 @@ def deal_test():
     global player_hand
     draw_from_deck = []
 
-    card_index = cards.index('6♥️')
+    card_index = cards.index('10♥️')
     draw_from_deck.append(cards.pop(card_index))
     card_index = cards.index('5♣️')
     draw_from_deck.append(cards.pop(card_index))
-    card_index = cards.index('8♠️')
+    card_index = cards.index('8♣️')
     draw_from_deck.append(cards.pop(card_index))
-    card_index = cards.index('A♦️')
+    card_index = cards.index('5♥️')
     draw_from_deck.append(cards.pop(card_index))
 
     dealer_hand.append(draw_from_deck[0])
@@ -312,6 +308,7 @@ def statistics():
 
 
 def find_similar_hands():
+    global total_wins
     conn = create_connection()
     c = conn.cursor()
     # finds the current player's hand
@@ -342,6 +339,7 @@ def find_similar_hands():
     conn.commit()
     conn.close()
 
+    total_wins = wins
     print(
         f'I saw this hand {wins + ties + losses} times\nThe player won: {wins} times, lost: {losses} and tied: {ties}\n')
 

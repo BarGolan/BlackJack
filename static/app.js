@@ -4,147 +4,164 @@ let delay = 2000;
 let sum = 0;
 
 $(document).ready(function() {
-    
-    $("#new_game").on("click", function() {
-        if (document.getElementById("player_hand")) {
-            reset_screen();
-        }
-        create_game_screen();
-        $.ajax({
-            url: '/new_game',
-            success: function(response) {
-                console.log('game initialized successfully');
+    try {
 
-                // Displays the cards on screen
-                response = JSON.parse(response);
-                display_hands(response[0], 'player');
-                display_hands(response[1], 'dealer');
-
-                // Hides the second card of the dealer
-                const second_card = document.getElementById("dealer-2");
-                second_card.style.backgroundColor = "rgb(169, 163, 163)";
-                second_card.style.color = "rgb(169, 163, 163)";
-
-
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log('Error:', textStatus, errorzThrown);
+        $("#new_game").on("click", function() {
+            if (document.getElementById("player_hand")) {
+                reset_screen();
             }
+            create_game_screen();
+            $.ajax({
+                url: '/new_game',
+                success: function(response) {
+                    console.log('game initialized successfully');
+
+                    // Displays the cards on screen
+                    response = JSON.parse(response);
+                    display_hands(response[0], 'player');
+                    display_hands(response[1], 'dealer');
+
+                    // Hides the second card of the dealer
+                    const second_card = document.getElementById("dealer-2");
+                    second_card.style.backgroundColor = "rgb(169, 163, 163)";
+                    second_card.style.color = "rgb(169, 163, 163)";
+
+
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error:', textStatus, errorThrown);
+                }
+            });
         });
-    });
 
-    $("#container").on("click", "#hit_me.commands", function() {
-        const hit_me = document.querySelector("#hit_me.commands");
-        const stand = document.querySelector("#stand.commands");
-        $.ajax({
-            url: '/dealPlayer',
-            success: function(response) {
-                remove_hands('player');
-                response = JSON.parse(response);
-                display_hands(response, 'player');
+        $("#container").on("click", "#hit_me.commands", function() {
+            const hit_me = document.querySelector("#hit_me.commands");
+            const stand = document.querySelector("#stand.commands");
+            $.ajax({
+                url: '/dealPlayer',
+                success: function(response) {
+                    remove_hands('player');
+                    response = JSON.parse(response);
+                    display_hands(response, 'player');
 
-                $.ajax({
-                    url: '/is_bust',
-                    success: async function(response) {
-                        response = JSON.parse(response);
-                        if (response == 'Bust') {
-                            hit_me.style.display = 'none';
-                            stand.style.display = 'none';
-                            await sleep(delay);
-                            let message = 'Bust ! You Lost'
-                            game_over(message, 'player');
+                    $.ajax({
+                        url: '/is_bust',
+                        success: async function(response) {
+                            response = JSON.parse(response);
+                            if (response == 'Bust') {
+                                hit_me.style.display = 'none';
+                                stand.style.display = 'none';
+                                await sleep(delay);
+                                let message = 'Bust ! You Lost'
+                                game_over(message, 'player');
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.log('Error:', textStatus, errorThrown);
                         }
+                    });
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error:', textStatus, errorThrown);
+                }
+            });
+        });
+
+        $("#container").on("click", "#stand.commands", async function() {
+            const stand = document.querySelector("#stand.commands");
+            const hit_me = document.querySelector("#hit_me.commands");
+            const lamp = document.querySelector("#statistics");
+            const lamp_text = document.querySelector("p");
+
+            hit_me.style.display = 'none';
+            stand.style.display = 'none';
+            if (lamp_text != null) {
+                lamp_text.style.display = 'none';
+            }
+            lamp.style.display = 'none';
+            $.ajax({
+                url: '/init_dealer_sum',
+                async: false,
+                success: async function(response) {
+                    response = JSON.parse(response);
+                    let init_sum = response;
+                    if (init_sum > 16 & init_sum <=21) {
+                        try {
+                            // Reveals the second card of the dealer
+                            const second_card = document.querySelector("#dealer-2.dealer-cards");
+                            second_card.style.backgroundColor = "transparent";
+                            second_card.style.color = "black";
+                            await sleep(delay);
+                            check_winner_no_bust();
+                        } catch (error) {
+                            console.error(error);
+                            location.reload();
+                        }
+                    } else {
+                        $.ajax({
+                                url: '/dealDealer',
+                                async: false,
+                                success: async function(response) {
+                                    try {
+                                        // Reveals the second card of the dealer
+                                        const second_card = document.querySelector("#dealer-2.dealer-cards");
+                                        second_card.style.backgroundColor = "transparent";
+                                        second_card.style.color = "black";
+                                    
+                                        remove_hands('dealer');
+                                        response = JSON.parse(response);
+                                        sum = response[1];
+                                        display_hands(response[0], 'dealer');
+                                        await sleep(delay);
+                                        check_winner();
+                                    } catch (error) {
+                                        console.error(error);
+                                        location.reload();
+                                    }
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.log('Error:', textStatus, errorThrown);
+                                location.reload();
+                            }
+                        }); 
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error:', textStatus, errorThrown);
+                    location.reload();
+                }
+            });
+
+        });
+
+        $("#statistics").on("click", function() {
+            let stat_div = $('#stat_div');
+            if (stat_div.is(':visible')) { 
+                stat_div.remove();
+            } else {
+                $.ajax({
+                    url: '/statistics',
+                    success: function(response) {
+                        console.log('caculating statistics');
+                        response = JSON.parse(response);
+                        response[0] = response[0].toString().replace(/\n/g, "<br>");
+                        response[1] = response[1].toString().replace(/\n/g, "<br>");
+                        //Checks if stat_div already exists
+                            stat_div = document.createElement("div");
+                            stat_div.id = "stat_div";
+                            stat_div.innerHTML = '<p> ' + response[0] + '<br>' + response[1] + ' </p>';
+                            document.body.appendChild(stat_div);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.log('Error:', textStatus, errorThrown);
                     }
                 });
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log('Error:', textStatus, errorThrown);
             }
         });
-    });
-
-    $("#container").on("click", "#stand.commands", async function() {
-        const stand = document.querySelector("#stand.commands");
-        const hit_me = document.querySelector("#hit_me.commands");
-        const lamp = document.querySelector("#statistics");
-        const lamp_text = document.querySelector("p");
-
-        hit_me.style.display = 'none';
-        stand.style.display = 'none';
-        if (lamp_text != null) {
-            lamp_text.style.display = 'none';
-        }
-        lamp.style.display = 'none';
-        $.ajax({
-            url: '/init_dealer_sum',
-            async: false,
-            success: async function(response) {
-                response = JSON.parse(response);
-                let init_sum = response;
-                if (init_sum > 16 & init_sum <=21) {
-                    // Reveals the second card of the dealer
-                    const second_card = document.querySelector("#dealer-2.dealer-cards");
-                    second_card.style.backgroundColor = "transparent";
-                    second_card.style.color = "black";
-                    await sleep(delay);
-                    check_winner_no_bust();
-                } else {
-                    $.ajax({
-                            url: '/dealDealer',
-                            async: false,
-                            success: async function(response) {
-                                // Reveals the second card of the dealer
-                                const second_card = document.querySelector("#dealer-2.dealer-cards");
-                                second_card.style.backgroundColor = "transparent";
-                                second_card.style.color = "black";
-                            
-                                remove_hands('dealer');
-                                response = JSON.parse(response);
-                                sum = response[1];
-                                display_hands(response[0], 'dealer');
-                                await sleep(delay);
-                                check_winner();
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            console.log('Error:', textStatus, errorThrown);
-                        }
-                    }); 
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log('Error:', textStatus, errorThrown);
-            }
-        });
-
-    });
-
-    $("#statistics").on("click", function() {
-        $.ajax({
-            url: '/statistics',
-            success: function(response) {
-                console.log('caculating statistics');
-                response = JSON.parse(response);
-                response[0] = response[0].toString().replace(/\n/g, "<br>");
-                response[1] = response[1].toString().replace(/\n/g, "<br>");
-                //Checks if stat_div already exists
-                let stat_div = document.getElementById("stat_div")
-                if (stat_div == null) {
-                    stat_div = document.createElement("div");
-                    stat_div.id = "stat_div";
-                    stat_div.innerHTML = '<p> ' + response[0] + '<br>' + response[1] + ' </p>';
-                    document.body.appendChild(stat_div);
-                } else {
-                    stat_div.remove();
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log('Error:', textStatus, errorThrown);
-            }
-        });
-    });
+    } catch (error) {
+        console.error(error);
+        location.reload();
+    }
 });
 
 function create_game_screen() {
@@ -259,15 +276,12 @@ function sleep(ms) {
 
 function check_winner() {
     if (sum > 21) {
-        console.log('sum > 21');
         let message = 'Bust! Dealer Lost you Won!';
         game_over(message, 'dealer');
     } else if (sum <= 16) {
-        console.log('sum <= 16');
         const stand = document.querySelector("#stand.commands");
         stand.click();
     } else {
-        console.log('else');
         check_winner_no_bust();
     }
 }
@@ -281,6 +295,7 @@ function check_winner_no_bust() {
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.log('Error:', textStatus, errorThrown);
+            location.reload();
         }
     });
 }
