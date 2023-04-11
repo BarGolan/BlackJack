@@ -12,8 +12,7 @@ player_hand = []
 dealer_hand = []
 game = 0
 op_id = 0
-total_wins = 0
-winning_rate = 0
+wins = ties = losses = hit_me_win_rate = stand_win_rate = 0
 
 
 def create_connection():
@@ -45,7 +44,7 @@ def index():
 
 @app.route('/new_game', methods=['GET', 'POST'])
 def new_game():
-    global player_hand, dealer_hand, game, op_id, total_wins
+    global player_hand, dealer_hand, game, op_id
     create_new_deck()
     player_hand = []
     dealer_hand = []
@@ -56,13 +55,10 @@ def new_game():
 
     conn = create_connection()
     c = conn.cursor()
-
     # delete content of current-game table
     c.execute('DELETE FROM current_game;')
-
-    # gets the last game in he 'gams' table from gambler db.
+    # gets the last game in he 'games' table from gambler db.
     c.execute('SELECT MAX(game) FROM games;')
-
     # Fetch the result
     result = c.fetchone()
     if result[0] is None:
@@ -74,7 +70,6 @@ def new_game():
     # commit the changes and close the connection
     conn.commit()
     conn.close()
-
     insert_new_row_to_current()
 
     return json.dumps(tuple_of_lists)
@@ -130,7 +125,7 @@ def deal_test():
 
 @app.route('/dealPlayer')
 def dealPlayer():
-    global op_id, total_wins
+    global op_id, wins
     random_card = random.randint(0, len(cards) - 1)
     player_hand.append(cards.pop(random_card))
     print(f'Player: {player_hand}   sum is {sum(player_hand)}')
@@ -143,10 +138,6 @@ def dealPlayer():
     current_time = datetime.datetime.now()
     insert_to_current('time', current_time)
     op_id += 1
-
-    # update static statistic variables
-    total_wins = find_similar_hands()[0]
-    find_winning_rate()
 
     return json.dumps(player_hand)
 
@@ -297,18 +288,24 @@ def check_column_validity(column):
 
 # --------------------------------------------- Statistics --------------------------------------------- #
 
-@app.route('/statistics')
+@app.route('/display_statistics')
 def statistics():
-    wins, ties, losses = find_similar_hands()
     similar_hands_message = f'I saw this hand {wins + ties + losses} times.\nPlayer won: {wins} times\nPlayer lost: {losses} times\nPlayer tied: {ties} times\n'
-    hit_me_win_rate, stand_win_rate = find_winning_rate()
     winning_rate_message = f'In this position:\nhit me win rate : {hit_me_win_rate} %\nstand win rate : {stand_win_rate} %\n'
     message_tuple = (similar_hands_message, winning_rate_message)
     return json.dumps(message_tuple)
 
 
+@app.route('/calculate_statistics')
+def calculate_statistics():
+    global wins, ties, losses, hit_me_win_rate, stand_win_rate
+    wins, ties, losses = find_similar_hands()
+    hit_me_win_rate, stand_win_rate = find_winning_rate()
+    return json.dumps(0)
+
+
 def find_similar_hands():
-    global total_wins
+    global wins
     conn = create_connection()
     c = conn.cursor()
     # finds the current player's hand
@@ -339,7 +336,6 @@ def find_similar_hands():
     conn.commit()
     conn.close()
 
-    total_wins = wins
     print(
         f'I saw this hand {wins + ties + losses} times\nThe player won: {wins} times, lost: {losses} and tied: {ties}\n')
 
@@ -374,11 +370,11 @@ def find_winning_rate():
     conn.close()
 
     try:
-        hit_me_win_rate = (hit_me_wins / total_wins) * 100
+        hit_me_win_rate = (hit_me_wins / wins) * 100
     except ZeroDivisionError:
         hit_me_win_rate = 0
     try:
-        stand_win_rate = (stand_wins / total_wins) * 100
+        stand_win_rate = (stand_wins / wins) * 100
     except ZeroDivisionError:
         stand_win_rate = 0
     print(

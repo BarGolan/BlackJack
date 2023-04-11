@@ -26,7 +26,7 @@ $(document).ready(function() {
                     second_card.style.backgroundColor = "rgb(169, 163, 163)";
                     second_card.style.color = "rgb(169, 163, 163)";
 
-
+                    calculate_statistics();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log('Error:', textStatus, errorThrown);
@@ -43,7 +43,6 @@ $(document).ready(function() {
                     remove_hands('player');
                     response = JSON.parse(response);
                     display_hands(response, 'player');
-
                     $.ajax({
                         url: '/is_bust',
                         success: async function(response) {
@@ -60,6 +59,7 @@ $(document).ready(function() {
                             console.log('Error:', textStatus, errorThrown);
                         }
                     });
+                    calculate_statistics();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log('Error:', textStatus, errorThrown);
@@ -140,9 +140,9 @@ $(document).ready(function() {
                 stat_div.remove();
             } else {
                 $.ajax({
-                    url: '/statistics',
+                    url: '/display_statistics',
                     success: function(response) {
-                        console.log('caculating statistics');
+                        console.log('displaying statistics');
                         response = JSON.parse(response);
                         response[0] = response[0].toString().replace(/\n/g, "<br>");
                         response[1] = response[1].toString().replace(/\n/g, "<br>");
@@ -296,6 +296,18 @@ function check_winner_no_bust() {
         error: function(jqXHR, textStatus, errorThrown) {
             console.log('Error:', textStatus, errorThrown);
             location.reload();
+        }
+    });
+}
+
+function calculate_statistics() {
+    $.ajax({
+        url: '/calculate_statistics',
+        success: function(response) {
+            console.log('calculating statistics');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('Error:', textStatus, errorThrown);
         }
     });
 }
