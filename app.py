@@ -107,7 +107,7 @@ def deal_test():
 
     card_index = cards.index('10♥️')
     draw_from_deck.append(cards.pop(card_index))
-    card_index = cards.index('5♣️')
+    card_index = cards.index('A♣️')
     draw_from_deck.append(cards.pop(card_index))
     card_index = cards.index('8♣️')
     draw_from_deck.append(cards.pop(card_index))
@@ -291,7 +291,7 @@ def check_column_validity(column):
 @app.route('/display_statistics')
 def statistics():
     similar_hands_message = f'I saw this hand {wins + ties + losses} times.\nPlayer won: {wins} times\nPlayer lost: {losses} times\nPlayer tied: {ties} times\n'
-    winning_rate_message = f'In this position:\nhit me win rate : {hit_me_win_rate} %\nstand win rate : {stand_win_rate} %\n'
+    winning_rate_message = f'In this position:\nhit me win rate : {hit_me_win_rate:.2f} %\nstand win rate : {stand_win_rate:.2f} %\n'
     message_tuple = (similar_hands_message, winning_rate_message)
     return json.dumps(message_tuple)
 

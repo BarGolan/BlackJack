@@ -6,7 +6,7 @@ $(document).ready(function() {
 
 async function run_script() {
     let i = 0;
-    while (i < 100090) {
+    while (i < 100000) {
         console.log('starting game number: ' + i);
         await start_new_game();
         await click_buttons();

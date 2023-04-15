@@ -2,6 +2,7 @@
 
 let delay = 2000;
 let sum = 0;
+let dealer_second_card = "";
 
 $(document).ready(function() {
     try {
@@ -21,8 +22,8 @@ $(document).ready(function() {
                     display_hands(response[0], 'player');
                     display_hands(response[1], 'dealer');
 
-                    // Hides the second card of the dealer
-                    const second_card = document.getElementById("dealer-2");
+                    dealer_second_card.remove();
+                    const second_card = document.querySelector("#dealer-2");
                     second_card.style.backgroundColor = "rgb(169, 163, 163)";
                     second_card.style.color = "rgb(169, 163, 163)";
 
@@ -91,6 +92,7 @@ $(document).ready(function() {
                             const second_card = document.querySelector("#dealer-2.dealer-cards");
                             second_card.style.backgroundColor = "transparent";
                             second_card.style.color = "black";
+                            second_card.appendChild(dealer_second_card);
                             await sleep(delay);
                             check_winner_no_bust();
                         } catch (error) {
@@ -209,15 +211,24 @@ function create_game_screen() {
 
 function display_hands(cards, parent) {
     const hand = document.getElementById(`${parent}_hand`);
-
+    let card_image = ""
     // Loop to create and append each card to its parent
     for (let i = 1; i <= cards.length; i++) {
         const card = document.createElement("div");
         card.setAttribute("id", `${parent}-${i}`);
         card.setAttribute("class", `${parent}-cards`);
-        card.textContent = cards[i - 1];
-        hand.appendChild(card)
+
+        const card_type = cards[i - 1];
+        card_image = document.createElement("img");
+        card_image.alt = card_type;
+        card_image.setAttribute("id", `card-image`);
+
+        card_image.src = "static/images/all_cards/" + card_type + ".png";
+        
+        card.appendChild(card_image);
+        hand.appendChild(card);
     }
+    dealer_second_card = card_image
 }
 
 function remove_hands(parent) {
